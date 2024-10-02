@@ -11,7 +11,7 @@ class NetworkScanner:
         self.nm = nmap.PortScanner()
 
     def perform_scan(self):
-        """ Perform a network scan based on the scan type and target IP. """
+        """ Perform a network scan based on the scan type and target IP """
         print(f"Starting scan on {self.target_ip} with scan type {self.scan_type} on port range {self.port_range}...")
         try:
             # Perform the scan with version detection (add -sV flag)
