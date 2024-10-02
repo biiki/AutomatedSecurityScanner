@@ -3,7 +3,7 @@ import re
 from utils import standardize_service_name
 
 def check_cve(service_name, version):
-    """ Query the CVE API to check for vulnerabilities. """
+    """ Query the CVE api to check for vulnerabilities. """
     if service_name == 'unknown' or version == 'unknown':
         print(f"Skipping CVE check for {service_name} version {version}")
         return
@@ -16,7 +16,7 @@ def check_cve(service_name, version):
         print(f"Service {service_name} is not valid for CVE lookup.")
         return
 
-    # Clean the version string (remove non-alphanumeric characters, e.g., p1)
+    # Clean the version string 
     cleaned_version = re.sub(r'[^0-9\.]', '', version)
     print(f"Checking CVEs for {service_name} version {cleaned_version}")
     
@@ -27,7 +27,6 @@ def check_cve(service_name, version):
         response = requests.get(url)
         response.raise_for_status()
 
-        # Parse the response
         cve_results = response.json()
 
         if not cve_results:
