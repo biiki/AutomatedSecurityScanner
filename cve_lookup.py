@@ -1,44 +1,65 @@
 import requests
 import re
 from utils import standardize_service_name
+from dotenv import load_dotenv
+import os
 
-def check_cve(service_name, version):
-    """ Query the CVE api to check for vulnerabilities. """
-    if service_name == 'unknown' or version == 'unknown':
-        print(f"Skipping CVE check for {service_name} version {version}")
-        return
+load_dotenv()
 
-    # Standardize service names for the CVE API
-    service_name = standardize_service_name(service_name)
+api_key = os.getenv('NVD_API_KEY')
 
-    # If no version detected or an invalid service name, skip
-    if service_name is None:
-        print(f"Service {service_name} is not valid for CVE lookup.")
-        return
-
-    # Clean the version string 
-    cleaned_version = re.sub(r'[^0-9\.]', '', version)
-    print(f"Checking CVEs for {service_name} version {cleaned_version}")
-    
-    # Construct the API URL for CVE search
-    url = f"https://cve.circl.lu/api/search/{service_name}/{cleaned_version}"
-    
+def cve_lookup(service, version):
+    url = f"https://cve.circl.lu/api/search/{service}/{version}"
     try:
         response = requests.get(url)
-        response.raise_for_status()
-
-        cve_results = response.json()
-
-        if not cve_results:
-            print(f"No vulnerabilities found for {service_name} version {cleaned_version}")
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                print(f"Found a CVE database match for {service}, version {version}:")
+            else:
+                print(f"No CVE matches found for {service}, version {version}.")
         else:
-            print(f"Vulnerabilities found for {service_name} version {cleaned_version}:")
-            for entry in cve_results:
-                print(f"CVE ID: {entry['id']}")
-                print(f"Summary: {entry['summary']}")
-                print("-----")
+            print(f"HTTP error occurred: {response.status_code} - {response.reason}")
     
-    except requests.exceptions.HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-    except Exception as err:
-        print(f"An error occurred: {err}")
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while trying to fetch CVEs: {e}")
+
+
+def cve_lookup_nvd(service, version, api_key):
+    url = f"https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={service}%20{version}"
+    headers = {
+        'apiKey': api_key  # API key is now passed as a parameter
+    }
+    
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            if 'result' in data and data['result']['CVE_Items']:
+                print(f"Found a CVE match for {service} version {version}:")
+                # Process and print CVE items
+                for cve_item in data['result']['CVE_Items']:
+                    print(f"CVE ID: {cve_item['cve']['CVE_data_meta']['ID']}")
+                    print(f"Description: {cve_item['cve']['description']['description_data'][0]['value']}")
+            else:
+                print(f"No CVEs found for {service} version {version}")
+        else:
+            print(f"HTTP error occurred: {response.status_code} - {response.reason}")
+    
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while trying to fetch CVEs: {e}")
+
+# Standardizing service names for the CVE API
+def standardize_service_and_version(service, version):
+    service_name = standardize_service_name(service)
+    
+    # If no valid service name, return none
+    if service_name is None:
+        print(f"Service {service_name} is not valid for CVE lookup.")
+        return None, None
+    
+    # Clean the version string to remove any nonnumeric chars
+    cleaned_version = re.sub(r'[^0-9\.]', '', version)
+    
+    return service_name, cleaned_version
+
