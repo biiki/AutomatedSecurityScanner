@@ -30,13 +30,13 @@ def select_scan_type():
 def main():
     parser = argparse.ArgumentParser(description="Network Scanner with Vulnerability Detection")
     
-    # Positional argument: target IP or domain
+    # target IP or domain
     parser.add_argument('target', type=str, help="The target IP or domain to scan")
     
-    # Optional argument: port range (default is 1-1024)
+    # port range (default is 1-1024)
     parser.add_argument('--ports', type=str, default='1-1024', help="Specify the port range to scan (default is 1-1024)")
 
-    # Optional argument: scan type (can skip the interactive menu)
+    # scan type (can skip the interactive menu)
     parser.add_argument('--scan-type', type=str, default=None, help="Specify the scan type (e.g., -sS for SYN scan, -sT for TCP scan, -O for OS detection)")
 
     args = parser.parse_args()
@@ -45,13 +45,13 @@ def main():
     if args.scan_type:
         scan_type = args.scan_type
     else:
-        # If no scan type provided, fall back to interactive menu
+        # If no scan type provided, uses interactive menu
         scan_type = select_scan_type()
 
     # Create the NetworkScanner instance
     scanner = NetworkScanner(target_ip=args.target, scan_type=scan_type, port_range=args.ports)
     
-    # Perform the scan
+    # scan
     nm = scanner.perform_scan()
     
     if nm:
