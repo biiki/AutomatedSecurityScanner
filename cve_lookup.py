@@ -1,65 +1,55 @@
 import requests
-import re
-from utils import standardize_service_name
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-api_key = os.getenv('NVD_API_KEY')
-
-def cve_lookup(service, version):
-    url = f"https://cve.circl.lu/api/search/{service}/{version}"
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if data:
-                print(f"Found a CVE database match for {service}, version {version}:")
-            else:
-                print(f"No CVE matches found for {service}, version {version}.")
-        else:
-            print(f"HTTP error occurred: {response.status_code} - {response.reason}")
-    
-    except requests.exceptions.RequestException as e:
-        print(f"An error occurred while trying to fetch CVEs: {e}")
-
 
 def cve_lookup_nvd(service, version, api_key):
-    url = f"https://services.nvd.nist.gov/rest/json/cves/1.0?keyword={service}%20{version}"
+    print(f"Performing CVE lookup for service: {service}, version: {version}")
+    print(f"Using API key: {api_key}")
+
+    # Simplified URL using only cvssV3Severity=HIGH
+    url = "https://services.nvd.nist.gov/rest/json/cves/2.0?cvssV3Severity=HIGH"
     headers = {
-        'apiKey': api_key  # API key is now passed as a parameter
+        'apiKey': api_key  # API key passed as a parameter
     }
-    
+
     try:
+        print(f"Making request to: {url}")
         response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            if 'result' in data and data['result']['CVE_Items']:
-                print(f"Found a CVE match for {service} version {version}:")
-                # Process and print CVE items
-                for cve_item in data['result']['CVE_Items']:
-                    print(f"CVE ID: {cve_item['cve']['CVE_data_meta']['ID']}")
-                    print(f"Description: {cve_item['cve']['description']['description_data'][0]['value']}")
+        print(f"Response status code: {response.status_code}")
+
+        # Raise an HTTPError for bad responses
+        response.raise_for_status()
+
+        # Parse JSON response
+        data = response.json()
+        print(f"Data received from NVD API: {data}")
+
+        if 'vulnerabilities' in data:
+            print(f"Found CVEs with HIGH severity:")
+            for vuln in data['vulnerabilities']:
+                cve = vuln['cve']
+                print(f"CVE ID: {cve['id']}")
+                description = cve['descriptions'][0]['value'] if cve['descriptions'] else "No description available.."
+                print(f"Description: {description}")
+                print("-----")
+
+        cve_count = len(data['vulnerabilities'])
+        if cve_count > 10:
+            with open("vuln_results.txt", "w") as f:
+                for vuln in data["vulnerabilities"]:
+                    cve = vuln["cve"]
+                    description = cve['descriptions'][0]['value'] if cve ['descriptions'] else "No description available.."
+                    f.write(f"CVE ID: {cve['id']}\nDescription: {description}\n-----\n")
+                print(f'Results saved to vuln_results.txt')
+        else:
+            for vuln in data['vulnerabilities']:
+                cve = vuln['cve']
+                print(f"CVE ID: {cve['id']}")
+                description = cve['description'][0]['value'] if cve['description'] else "No descrpition available.."
+                print(f"Description: {description}")
+                print("----")
             else:
                 print(f"No CVEs found for {service} version {version}")
-        else:
-            print(f"HTTP error occurred: {response.status_code} - {response.reason}")
-    
+
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while trying to fetch CVEs: {e}")
-
-# Standardizing service names for the CVE API
-def standardize_service_and_version(service, version):
-    service_name = standardize_service_name(service)
-    
-    # If no valid service name, return none
-    if service_name is None:
-        print(f"Service {service_name} is not valid for CVE lookup.")
-        return None, None
-    
-    # Clean the version string to remove any nonnumeric chars
-    cleaned_version = re.sub(r'[^0-9\.]', '', version)
-    
-    return service_name, cleaned_version
-
+    except Exception as err:
+        print(f"An unexpected error occurred: {err}")
