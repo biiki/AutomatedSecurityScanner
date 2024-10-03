@@ -1,6 +1,15 @@
 import argparse
 from nmap_scan import NetworkScanner
-from cve_lookup import check_cve
+from cve_lookup import cve_lookup_nvd
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Fetch the API key from the environment variables
+api_key = os.getenv('NVD_API_KEY')
+print(f"API key loaded {api_key}")
 
 def select_scan_type():
     print("Select a scan type:")
@@ -45,19 +54,19 @@ def main():
     if args.scan_type:
         scan_type = args.scan_type
     else:
-        # If no scan type provided, uses interactive menu
         scan_type = select_scan_type()
 
     # Create the NetworkScanner instance
     scanner = NetworkScanner(target_ip=args.target, scan_type=scan_type, port_range=args.ports)
     
-    # scan
+    # Perform the scan
     nm = scanner.perform_scan()
     
     if nm:
-        # Display scan results and run CVE checks
+        # Display scan results and run CVE check
         for service, version in scanner.display_scan_results(nm):
-            check_cve(service, version)
+            print(f"Calling CVE lookup for service {service}, version: {version}")
+            cve_lookup_nvd(service, version, api_key)
 
 if __name__ == "__main__":
     main()
