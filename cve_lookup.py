@@ -4,7 +4,9 @@ def cve_lookup_nvd(service, version, api_key):
     print(f"Performing CVE lookup for service: {service}, version: {version}")
     print(f"Using API key: {api_key}")
 
-    # Simplified URL using only cvssV3Severity=HIGH
+    """ Simplified URL/Can be swapped out depending on the search criteria,
+    will be adding a few to the read me for examples. """ 
+    
     url = "https://services.nvd.nist.gov/rest/json/cves/2.0?cvssV3Severity=HIGH"
     headers = {
         'apiKey': api_key  # API key passed as a parameter
