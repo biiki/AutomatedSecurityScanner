@@ -7,9 +7,8 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
-# Fetch the API key from the environment variables
+# Pulls the API key from the environment variables
 api_key = os.getenv('NVD_API_KEY')
-print(f"API key loaded {api_key}")
 
 def select_scan_type():
     print("Select a scan type:")
@@ -30,7 +29,7 @@ def select_scan_type():
     elif choice == "4":
         return "-O"
     elif choice == "5":
-        custom_scan = input("Enter your custom nmap scan option (e.g., -sP, -sN): ")
+        custom_scan = input("Enter your custom nmap scan option (e.g., -sP, -sN, -sV): ")
         return custom_scan
     else:
         print("Invalid choice, defaulting to SYN scan.")
