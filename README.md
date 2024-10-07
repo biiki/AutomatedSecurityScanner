@@ -9,6 +9,9 @@ The API key is optional, but without one, public rate limits kick in.
 Without an API, the rate limit is 5 requests within a 30 second window.
 With an API, it's 50 requests within a 30 second window. 
 
+# Pending update
+Will be pushing an update which handles the API/
+
 ## Setting up env variables
 
 Create a .env file in root dir of the project with the following content: NVD_API_KEY=your_api_here
